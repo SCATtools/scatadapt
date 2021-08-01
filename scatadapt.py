@@ -16,3 +16,5 @@ def Ji(th,it,model=NULL, D=1):
     resd=as.numeric(rowSums(prov1,na.rm=TRUE))
     res={Ji:res,dJi:resd}
   return res
+def Pi():
+  
