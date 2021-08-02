@@ -30,7 +30,7 @@ def fullDist(th, it, method = "BM", priorDist="norm",priorPar=np.array([0,1]), w
             t=(t+1)%2
           res[y,i]=t
           k+=1
-    return(res)
+    return res
   def LW(th,it,D=1):
     P=Pi(th,it,D=D)['pi']
     Q=1-P
@@ -48,7 +48,7 @@ def fullDist(th, it, method = "BM", priorDist="norm",priorPar=np.array([0,1]), w
               else:
                 res[j,i]<-res[j-1,i-1]*P[i]+res[j,i-1]*Q[i]
     res2=np.concatenate((np.reshape(np.array(range(res.shape[1]+1)),(res.shape[1]+1,1)),np.reshape(res[:,-1],(res.shape[1]+1,1))),axis=1)
-    return(res2)
+    return res2
              
 def Pi():
   
