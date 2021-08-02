@@ -15,8 +15,6 @@ def Ji(th,it,model=None, D=1):
   return res
 
 
-
-
 def fullDist(th, it, method = "BM", priorDist="norm",priorPar=np.array([0,1]), weight = "Huber", tuCo   = 1, range  = np.array([-4 ,4]), parInt = np.array([-4, 4, 33])):
   def dataGen(n, model="1PL"):
     if model=="1PL":
