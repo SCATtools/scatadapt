@@ -13,6 +13,10 @@ def Ji(th,it,model=None, D=1):
   else:
     raise Exception('Не реализовано!')
   return res
+
+
+
+
 def fullDist(th, it, method = "BM", priorDist="norm",priorPar=np.array([0,1]), weight = "Huber", tuCo   = 1, range  = np.array([-4 ,4]), parInt = np.array([-4, 4, 33])):
   def dataGen(n, model="1PL"):
     if model=="1PL":
@@ -49,6 +53,33 @@ def fullDist(th, it, method = "BM", priorDist="norm",priorPar=np.array([0,1]), w
                 res[j,i]<-res[j-1,i-1]*P[i]+res[j,i-1]*Q[i]
     res2=np.concatenate((np.reshape(np.array(range(res.shape[1]+1)),(res.shape[1]+1,1)),np.reshape(res[:,-1],(res.shape[1]+1,1))),axis=1)
     return res2
-             
+  if type(1)==int:
+    th=np.array([th])
+  if np.absolute(np.mean(it[:,1])-1)<0.00001 and np.var(it[:,1])<0.00001:
+    mod="1PL"
+  else:
+    mod<-"other"
+  data = dataGen(it.shape[0],model=mod)
+  if (mod=="1PL"):
+    res=np.empty((it.shape[0],1+len(th)))
+    res[:]=np.nan
+    for i in range(data.shape[0]):
+      res[i, 0] = thetaEst(it, data[i], method = method, priorDist = priorDist,priorPar = priorPar, weight = weight,tuCo = tuCo, rang = rang)
+    for j in range(len(th)):
+      res[:, j+1]= LW(th[j], it)[:,1]
+  else:
+    res=np.empty((data.shape[0],1+len(th)))
+    res[:]=np.nan
+    for i in range(data.shape[0]):
+      res[i, 0] = thetaEst(it, data[i], method = method, priorDist = priorDist,priorPar = priorPar, weight = weight,tuCo = tuCo, rang = rang)
+      for j in range(len(th)):
+        pi = Pi(th[j], it)['pi']
+        qi = 1 - pi
+        res[i, 1 + j] = np.prod(pi**data[i] * qi**(1 - data[i]))
+  return res     
+
+
+
+
 def Pi():
   
