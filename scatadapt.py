@@ -1,14 +1,14 @@
-def Ji(th,it,model=NULL, D=1):
+def Ji(th,it,model=None, D=1):
   pr=Pi(th,it,model=model,D=D)
-  P = pr[Pi]
-  dP = pr[dPi]
-  d2P = pr[d2Pi]
-  d3P = pr[d3Pi]
-  if model is null:
+  P = pr['pi']
+  dP = pr['dpi']
+  d2P = pr['d2pi']
+  d3P = pr['d3pi']
+  if model is None:
     Q = 1-P
-    Ji = dP * d2P/(P * Q)
-    dJi = (P * Q * (d2P**2 + dP * d3P) - dP**2 * d2P *(Q - P))/(P**2 * Q**2)
-    res = {Ji: Ji, dJi : dJi}
+    ji = dP * d2P/(P * Q)
+    dji = (P * Q * (d2P**2 + dP * d3P) - dP**2 * d2P *(Q - P))/(P**2 * Q**2)
+    res = {'ji': ji, 'dji' : dji}
   else:
     prov=dP*d2P/P
     prov1=(P*d2P**2+P*dP*d3P-dP**2*d2P)/P**2
