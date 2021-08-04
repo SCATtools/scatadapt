@@ -81,9 +81,9 @@ def fullDist(th, it, method = "BM", priorDist="norm",priorPar=np.array([0,1]), w
 
 
 def Pi():
+  pass
 
  
-import numpy as np
 def integrate_cat(x, y):
     x1 = np.array(x[1:len(x)])
     x2 = np.array(x[0:len(x) - 1])
