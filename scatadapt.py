@@ -80,6 +80,22 @@ def fullDist(th, it, method = "BM", priorDist="norm",priorPar=np.array([0,1]), w
 
 
 
-
 def Pi():
+
+ 
+import numpy as np
+def integrate_cat(x, y):
+    x1 = np.array(x[1:len(x)])
+    x2 = np.array(x[0:len(x) - 1])
+    hauteur = x1 - x2
+    m = np.array([y[0:len(y) - 1], y[1:len(y)]])
+    length = len(y)
+    base = []
+    i = 0
+    for i in range(len(y) - 1):
+        base.append((m[0, i] + m[1, i]) / 2)
+        i += 1
+    base = np.array(base)
+    res = round(np.sum(hauteur * base))
+    return res
   
