@@ -99,7 +99,7 @@ def integrate_cat(x, y):
     res = round(np.sum(hauteur * base))
     return res
   
-def Ii(th,it,model = None,D = 1):
+def Ii(th, it, model = None, D = 1):
     pr = Pi(th, it, model = model, D = D)
     P = pr['pi']
     dP = pr['dpi']
