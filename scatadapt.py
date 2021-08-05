@@ -99,3 +99,18 @@ def integrate_cat(x, y):
     res = round(np.sum(hauteur * base))
     return res
   
+def Ii(th,it,model = None,D = 1):
+    pr = Pi(th, it, model = model, D = D)
+    P = pr['pi']
+    dP = pr['dpi']
+    d2P = pr['d2pi']
+    d3P = pr['d3pi']
+    if model is None:
+        Q = -1 - P
+        Ii = dP ** 2 / (P * Q)
+        dIi = dP * (2 * P * Q * d2P - dP ** 2 * (Q - P)) / (P ** 2 * Q ** 2)
+        d2Ii = (2 * P * Q * (d2P ** 2 + dP * d3P) - 2 * dP ** 2 * d2P * (Q - P)) / (P ** 2 * Q ** 2) - (3 * P ** 2 * Q * dP ** 2 * d2P - P * dP ** 4 * (2 * Q - P)) / (P ** 2 * Q ** 4)       )
+    else:
+        raise Exception('Не реализовано!')
+    res = {'Ii': Ii, 'dIi': dIi, 'd2Ii': d2Ii}
+    return res
