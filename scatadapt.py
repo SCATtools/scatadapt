@@ -1,5 +1,6 @@
 import numpy as np
 def Ji(th,it,model=None, D=1):
+    it = np.array([it]) if len(it.shape) == 1 else it
     pr=Pi(th,it,model=model,D=D)
     P = pr['pi']
     dP = pr['dpi']
@@ -53,6 +54,7 @@ def fullDist(th, it, method = "BM", priorDist="norm",priorPar=np.array([0,1]), w
                         res[j,i]<-res[j-1,i-1]*P[i]+res[j,i-1]*Q[i]
         res2=np.concatenate((np.reshape(np.array(range(res.shape[1]+1)),(res.shape[1]+1,1)),np.reshape(res[:,-1],(res.shape[1]+1,1))),axis=1)
         return res2
+    it = np.array([it]) if len(it.shape) == 1 else it
     if type(1)==int:
         th=np.array([th])
     if np.absolute(np.mean(it[:,1])-1)<0.00001 and np.var(it[:,1])<0.00001:
@@ -116,6 +118,7 @@ def integrate_cat(x, y):
     return res
   
 def Ii(th, it, model = None, D = 1):
+    it = np.array([it]) if len(it.shape) == 1 else it
     pr = Pi(th, it, model = model, D = D)
     P = pr['pi']
     dP = pr['dpi']
