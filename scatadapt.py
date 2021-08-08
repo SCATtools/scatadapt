@@ -1,4 +1,6 @@
 import numpy as np
+import scipy.stats as ss
+
 def Ji(th,it,model=None, D=1):
     it = np.array([it]) if len(it.shape) == 1 else it
     pr=Pi(th,it,model=model,D=D)
@@ -114,7 +116,7 @@ def integrate_cat(x, y):
         base.append((m[0, i] + m[1, i]) / 2)
         i += 1
     base = np.array(base)
-    res = round(np.sum(hauteur * base))
+    res = np.sum(hauteur * base)
     return res
   
 def Ii(th, it, model = None, D = 1):
@@ -133,3 +135,36 @@ def Ii(th, it, model = None, D = 1):
         raise Exception('Не реализовано!')
     res = {'Ii': Ii, 'dIi': dIi, 'd2Ii': d2Ii}
     return res
+
+
+def eapEst (it,x,model=None,D=1,priorDist="norm",priorPar=[0,1],lower=-4,upper=4,nqp=33):
+    if model is None:
+        def L(th,it,x):
+            return np.prod(Pi(th,it,D=D)['pi']**x*(1-Pi(th,it,D=D)['pi'])**(1-x))
+        def g(s):
+            res=[]
+            for i in range(len(s)):
+                if priorDist=='norm':
+                    res.append(s[i]*ss.norm.pdf(s[i],priorPar[0],priorPar[1])*L(s[i],it,x))
+                elif priorDist=='unif':
+                    res.append(s[i]*ss.uniform.pdf(s[i],priorPar[1],priorPar[2])*L(s[i],it,x))
+                elif priorDist=='Jeffreys':
+                    res.append(s[i]*np.sqrt(sum(Ii(s[i],it,D=D)['Ii']))*L(s[i],it,x))
+            return np.array(res)
+        def h(s):
+            res=[]
+            for i in range(len(s)):
+                if priorDist=='norm':
+                    res.append(ss.norm.pdf(s[i],priorPar[0],priorPar[1])*L(s[i],it,x))
+                elif priorDist=='unif':
+                    res.append(ss.uniform.pdf(s[i],priorPar[0],priorPar[1])*L(s[i],it,x))
+                elif priorDist=='Jeffreys':
+                    res[i].append(np.sqrt(sum(Ii(s[i],it,D=D)['Ii']))*L(s[i],it,x))
+            return np.array(res)
+        X=np.linspace(start=lower,stop=upper,num=nqp)
+        Y1=g(X)
+        Y2=h(X)
+    else:
+        raise Exception('Не реализовано!')
+    RES=integrate_cat(X,Y1)/integrate_cat(X,Y2)
+    return RES
