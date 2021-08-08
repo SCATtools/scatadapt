@@ -93,11 +93,8 @@ def Pi(th : float, it : np.array, model = None, D = 1):
         d=  it[:,3]
         e = np.exp(D * a * (th - b))
         pi = c + (d - c) * e/(1 + e)
-        for i in range(len(pi)):
-            if pi[i] == 0: 
-                pi[i] = 1e-10
-            elif pi[i] == 1:
-                pi[i] = 1 - 1e-10
+        pi = np.where(pi == 0, 1e-10, pi)
+        pi = np.where(pi == 1, 1 - 1e-10, pi)
         dpi = D * a * e /(1 + e)**2
         d2pi = D**2 * a**2 * e * (1 - e) /(1 + e)**3
         d3pi = D**3 * a**3 * e * (e**2 - 4 * e + 1)/(1 + e)**4
