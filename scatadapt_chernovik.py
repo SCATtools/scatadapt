@@ -197,3 +197,64 @@ def eapSem (thEst,it,x,model=None,D=1,priorDist="norm",priorPar=[0,1],lower=-4,u
         raise Exception('Не реализовано!')
     RES=np.sqrt(integrate_cat(X,Y1)/integrate_cat(X,Y2))
     return RES
+
+def nextItem (itemBank, model = None, theta = 0, out = [], x = [], 
+    criterion = "MFI", method = "BM", priorDist = "norm", priorPar = [0,1], D = 1, rang = [-4, 4], parInt = [-4, 4, 33], infoType = "observed", 
+    randomesque = 1, random_seed = None, rule = "length", thr = 20, 
+    SETH = None, AP = 1, nAvailable = None, maxItems = 50, cbControl = None, 
+    cbGroup = None):
+    crit =criterion
+    if cbControl is None:
+        OUT = out
+    else:
+        raise Exception('Не реализовано!')
+    if nAvailable is not None:
+        raise Exception('Не реализовано!')
+    if crit == "MFI":
+        items = np.array([1 for i in range(itemBank.shape[0])] )
+        for i in OUT:
+            items[i] = 0
+        info = Ii(theta, itemBank, model = model, D = D)['Ii']
+        ranks=len(info)+1 - ss.rankdata(info).astype(int)
+        nrIt = np.min(np.array([randomesque, sum(items)]))
+        keepRank = np.sort(ranks[np.where(items == 1)])[:nrIt]
+        keep =[]
+        for i in range(len(keepRank)):
+            p=np.where(ranks == keepRank[i])
+            if items[p]==1:
+                keep.append(p)
+        if random_seed is not None:
+            np.random.seed(random_seed)
+        if len(keep)==1:
+            select=keep[0]
+        else:
+            select=np.random.choice(keep, 1)
+        res = {'item': select, 'par' : itemBank[select], 
+            'info' : info[select], 'criterion': criterion, 'randomesque' : randomesque,'name':None}
+    
+    if crit == "bOpt":
+        raise Exception('Не реализовано!')
+    if crit == "MLWI" or crit == "MPWI":
+        raise Exception('Не реализовано!')
+    if crit == "KL" or crit == "KLP":
+        raise Exception('Не реализовано!')
+    if crit == "GDI" or crit == "GDIP":
+        raise Exception('Не реализовано!')
+    if crit == "MEI":
+        raise Exception('Не реализовано!')
+    if crit == "MEPV":
+        raise Exception('Не реализовано!')
+    if crit == "random":
+        raise Exception('Не реализовано!')
+    if crit == "progressive":
+        raise Exception('Не реализовано!')
+    if crit == "proportional":
+        raise Exception('Не реализовано!')
+    if crit == "thOpt":
+        raise Exception('Не реализовано!')
+    if cbControl is None:
+        pass
+    else:
+        raise Exception('Не реализовано!')
+    np.random.seed(None)
+    return res
