@@ -258,3 +258,71 @@ def nextItem (itemBank, model = None, theta = 0, out = [], x = [],
         raise Exception('Не реализовано!')
     np.random.seed(None)
     return res
+def startItems(itemBank, model = None, fixItems = None, nrItems = 1, theta = 0, D = 1, randomesque = 0, 
+               seed = None, startSelect = "MFI", random_seed=None, nAvailable = None, cbControl = None, cbGroup = None, random_cb = None):
+    if nAvailable is not None:
+        raise Exception('Не реализовано!')
+    if cbControl is not None:
+        raise Exception('Не реализовано!')
+    if nrItems > 0:
+        if startSelect == "progressive" or startSelect == "proportional":
+            raise Exception('Не реализовано!')
+    if fixItems is not None:
+        raise Exception('Не реализовано!')
+    else:
+        if nrItems > 0:
+            if seed is not None: 
+                np.random.seed(seed)
+                if cbControl is None:
+                    if nAvailable is None: 
+                        items = np.random.choice(np.array([i for i in range(itemBank.shape[0])]), nrItems)
+                    else:
+                        items = np.random.choice(np.where(nAvailable == 1),   nrItems)
+                else:
+                    np.random.seed(None)
+                    raise Exception('Не реализовано!')
+                par = itemBank[items]
+                startSelect = None
+                thStart =  None
+                np.random.seed(None)
+            else:
+                if type(theta) == int:
+                    theta=[theta]
+                thStart = theta
+                if startSelect == "bOpt":
+                    raise Exception('Не реализовано!')
+                if startSelect == "thOpt":
+                    raise Exception('Не реализовано!')
+                if startSelect == "MFI":
+                    items = np.array([])
+                    nr_items = itemBank.shape[0]
+                    selected =np.tile(0, nr_items)
+                    if random_seed is not None:
+                        np.random.seed(random_seed)
+                    for i in range(len(thStart)):
+                        item_info = Ii(thStart[i], itemBank, model = model, D = D)['Ii']
+                        if nAvailable is not None: 
+                            pos_adm = (1 - selected) * np.array(nAvailable)
+                        else:
+                            pos_adm = 1 - selected
+                        pr = np.sort(item_info[np.where(pos_adm == 1)])
+                        keep = pr[randomesque]
+                        k = np.where(item_info >= keep)
+                        prov=np.array([])
+                        for y in k[0]:
+                            if pos_adm[y]==1:
+                                prov=np.append(prov,y)
+                        if len(prov) == 1:
+                            items=np.append(items, int(prov[0]))
+                        else:
+                            items=np.append(items, int(np.random.choice(prov, 1)[0]))
+                        selected[int(items[0])] = 1
+                items=items.astype(int)
+                par = itemBank[items]
+            res = {'items' :items, 'par' : par, 'thStart' : thStart, 
+                'startSelect' : startSelect,'names':None}
+        else:
+            res = {'items': None, 'par': None, 'thStart': None, 
+            'startSelect': None,'names': None}
+    np.random.seed(None)
+    return(res)
