@@ -328,7 +328,6 @@ def startItems(itemBank, model = None, fixItems = None, nrItems = 1, theta = 0, 
     return(res)
 
 
-import numpy as np
 def checkStopRule(th, se, N, it = None, model = None, D=1, stop):
     res = False
     res_rule = None
