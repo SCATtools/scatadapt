@@ -326,3 +326,34 @@ def startItems(itemBank, model = None, fixItems = None, nrItems = 1, theta = 0, 
             'startSelect': None,'names': None}
     np.random.seed(None)
     return(res)
+
+def checkStopRule(th, se, N, it = None, model = None, D=1, stop):
+    res = False
+    res_rule = None
+    for i in range(len(stop['rule'])):
+        if stop['rule'][i] == 'length':
+            ind = 1
+        if stop['rule'][i] == 'precision':
+            ind = 2
+        if stop['rule'][i] == 'classification':
+            ind = 3
+        if stop['rule'][i] == 'minInfo':
+            ind = 4
+        if ind == 1:
+            if N >= stop['thr'][i]:
+                res = True
+                res_rule = np.array([res_rule, stop['rule'][i])
+        if ind == 2:
+            if se <= stop['thr'][i]:
+                res = True
+                res_rule = np.array(res_rule, stop['rule'][i])
+        if ind == 3:
+            if th - ss.norm.ppf(1-stop['alpha']/2) * se >= stop['thr'][i] or th + ss.norm.ppf(1-stop['alpha']/2) * se <= stop['thr'][i] :
+                res = True
+                res_rule = np.array(res_rule, stop['rule'][i])
+        if ind == 4:
+            info = Ii(th, it, model = model, D = D)['Ii']
+            if max(info) <= stop['thr'][i]:
+                res = True
+                res_rule = np.array(res_rule, stop['rule'][i])
+    return {'desicion': res, 'rule': res_rule}
