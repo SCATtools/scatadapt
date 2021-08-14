@@ -350,7 +350,7 @@ def checkStopRule(th, se, N, it = None, model = None, D=1, stop):
                 res = True
                 res_rule = np.array(res_rule, stop['rule'][i])
         if ind == 3:
-            if th - ???? * se >= stop['thr'][i] or th + ???? * se <= stop['thr'][i] :
+            if th - ss.norm.ppf(1-stop['alpha']/2) * se >= stop['thr'][i] or th + ss.norm.ppf(1-stop['alpha']/2) * se <= stop['thr'][i] :
                 res = True
                 res_rule = np.array(res_rule, stop['rule'][i])
         if ind == 4:
