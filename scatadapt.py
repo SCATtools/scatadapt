@@ -358,3 +358,102 @@ def checkStopRule(th, se, N, it = None, model = None, D=1, stop):
                 res = True
                 res_rule = np.array(res_rule, stop['rule'][i])
     return {'desicion': res, 'rule': res_rule}
+
+                                     
+def thetaEst(it, x, model = None, D = 1, method = "BM", priorDist = "norm", priorPar = np.array([0, 1]), weight = "Huber", 
+             tuCo = 1, rang = np.array([-4,4]), parInt = np.array([-4, 4, 33]), constantPatt = None, current_th = 0, bRange = np.array([-2, 2])):
+    def constantPattern(t):
+        return sum(t) != 0 and sum(t) != len(t)
+    METHOD = None
+    if constantPattern(x) or model != None or constantPatt == None:  
+        METHOD = method
+    else:
+        if constantPatt in ["BM", "EAP", "WL"]: 
+            METHOD = constantPatt
+        else:
+            if sum(x) == 0:
+                res = key if constantPatt in { 'fixed4' : current_th - 0.4, 'fixed7' : current_th - 0.7,
+                                             'var' : 0.5 * (current_th + bRange[0])}.values() else 0
+            else: 
+                res = key if constantPatt in { 'fixed4' : current_th + 0.4, 'fixed7' : current_th + 0.7, 
+                                              'var' : 0.5 * (current_th + bRange[1])}.values() else 0
+    ind = np.array([i for i,v in enumerate(x) if v != None])
+    it = it[ind, ]
+    x = x[ind]
+    if METHOD != None:
+        if METHOD == "EAP": 
+            res = eapEst(it, x, model = model, D = D, priorDist = priorDist, 
+                    priorPar = priorPar, lower = parInt[0], upper = parInt[1], nqp = parInt[2])
+        else:
+            if model is None:
+                def r0(th, it, D = 1, method = "BM", priorDist = "norm", priorPar = np.array([0,1])):
+                    if method == "BM":
+                        Dic={ 'norm' : ((priorPar[0] - th)/(priorPar[1])**2), 'unif' : 0, 
+                                                   'Jeffreys' : sum(Ii(th, it, D = D)['dIi'])/(2 * sum(Ii(th, it, D = D)['Ii']))}
+                        if priorDist in Dic.keys():
+                            res=Dic[priorDist]
+                        else:
+                            res = 0
+                    else:
+                        Dic={ 'ML' : 0,
+                                               'WL' : sum(Ji(th, it, D = D)['Ji'])/(2 * sum(Ii(th, it, D = D)['Ii']))}
+                        if method in Dic.keys():
+                            res=Dic[method]
+                        else:
+                            res = 0
+                    return res
+                def r(th, it, x, D = 1):
+          
+                    pr = Pi(th, it, D = D)
+                    P = pr['pi']
+                    Q = 1 - P
+                    dP = pr['dpi']
+                    res = sum(dP * (x - P)/(P * Q))
+                    return res
+                def T(th, it, x, D = 1, method = "BM", priorDist = "norm", priorPar = np.array([0, 1])):
+                    return r0(th, it, D = D, method = method, priorDist = priorDist, priorPar = priorPar) + r(th, it, x, D = D)
+                def T_rob(th, it, x, weight = "Huber", tuCo = 1, D = 1):
+                    if weight not in np.array(["Huber", "Tukey"]):
+                        return("'weight' must be either 'Huber' or 'Tukey'")
+                    it = np.array([it]) if len(it.shape) == 1 else it 
+                    print(it)
+                    pr = Pi(th, it, D = D)
+                    P = pr['pi']
+                    Q = 1 - P
+                    dP = pr['dpi']
+                    dli = dP * (x - P)/(P * Q)
+                    ri = it[:, 0] * (th - it[:, 1])
+                    if weight == "Huber":
+                        wi = tuCo/abs(ri) if abs(ri) <= tuCo else 1
+                    if weight == "Tukey":
+                        wi = (1 - (ri/tuCo)**2)^2 if abs(ri) > tuCo else 0
+                    res = sum(wi * dli)
+                    return(res)
+                if METHOD == "BM" and priorDist == "unif": 
+                    def f(th):
+                        return T(th, it, x, D = D, method = "ML")
+                else:
+                    if METHOD == "ROB":
+                        def f(th):
+                            return T.rob(th, it, x, weight = weight, tuCo = tuCo, D = D)
+                    else:
+                        def f(th):
+                            return T(th, it, x, D = D, method = METHOD, priorDist = priorDist, priorPar = priorPar)
+                if METHOD == "BM" and priorDist == "unif": 
+                    RANG = priorPar
+                else:
+                    RANG = rang
+                if (f(RANG[0]) < 0 and f(RANG[1]) > 0) or (f(RANG[0]) > 0 and f(RANG[1]) < 0): 
+                    res = so.brentq(f, RANG[0],RANG[1])
+                else:
+                    pr = so.minimize(f, np.array([300]),bounds=np.array([(RANG[0],RANG[1])]))
+                    if pr['fun'] > 0: 
+                        res = RANG[1]
+                    else:
+                        pr2 = so.minimize(lambda th: -f(th),np.array([300]), bounds=np.array([(RANG[0],RANG[1])]))
+                        if -1*pr2['fun'] < 0:
+                            res = RANG[0]
+                        
+                        else:
+                            res = so.brentq(f, max(-1*pr2['x']), min(pr['x']))
+    return res
