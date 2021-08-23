@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.stats as ss
+import scipy.optimize as so
 
 def Ji(th,it,model=None, D=1):
     it = np.array([it]) if len(it.shape) == 1 else it
