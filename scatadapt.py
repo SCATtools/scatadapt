@@ -21,18 +21,18 @@ def Ji(th,it,model=None, D=1):
 
 
 
-def fullDist(th, it, method = "BM", priorDist="norm",priorPar=np.array([0,1]), weight = "Huber", tuCo   = 1, range  = np.array([-4 ,4]), parInt = np.array([-4, 4, 33])):
+def fullDist(th, it, method = "BM", priorDist="norm",priorPar=np.array([0,1]), weight = "Huber", tuCo   = 1, rang  = np.array([-4 ,4]), parInt = np.array([-4, 4, 33])):
     def dataGen(n, model="1PL"):
         if model=="1PL":
             res=np.zeros((n+1,n))
             for i in range(1,n+1):
                 res[i , 0:i] = 1
         else:
-            res = numpy.empty((2**n,n))
-            for i in range(n):
+            res = np.empty((2**n,n))
+            for i in range(int(n)):
                 k=0
                 t=0
-                for y in range(2**n):
+                for y in range(2**int(n)):
                     if k==2**(n-i-1):
                         k=0
                         t=(t+1)%2
@@ -52,20 +52,19 @@ def fullDist(th, it, method = "BM", priorDist="norm",priorPar=np.array([0,1]), w
                     res[j,i]=res[j,i-1]*Q[i]
                 else:
                     if j==i:
-                        res[j,i]<-res[j-1,i-1]*P[i]
+                        res[j,i]=res[j-1,i-1]*P[i]
                     else:
-                        res[j,i]<-res[j-1,i-1]*P[i]+res[j,i-1]*Q[i]
+                        res[j,i]=res[j-1,i-1]*P[i]+res[j,i-1]*Q[i]
         res2=np.concatenate((np.reshape(np.array(range(res.shape[1]+1)),(res.shape[1]+1,1)),np.reshape(res[:,-1],(res.shape[1]+1,1))),axis=1)
         return res2
-    it = np.array([it]) if len(it.shape) == 1 else it
     if type(1)==int:
         th=np.array([th])
     if np.absolute(np.mean(it[:,1])-1)<0.00001 and np.var(it[:,1])<0.00001:
         mod="1PL"
     else:
-        mod<-"other"
+        mod="other"
     data = dataGen(it.shape[0],model=mod)
-    if (mod=="1PL"):
+    if mod=="1PL":
         res=np.empty((it.shape[0],1+len(th)))
         res[:]=np.nan
         for i in range(data.shape[0]):
@@ -81,8 +80,7 @@ def fullDist(th, it, method = "BM", priorDist="norm",priorPar=np.array([0,1]), w
                 pi = Pi(th[j], it)['pi']
                 qi = 1 - pi
                 res[i, 1 + j] = np.prod(pi**data[i] * qi**(1 - data[i]))
-    return res     
-
+    return res 
 
 
 def Pi(th : float, it : np.array, model = None, D = 1):
@@ -458,3 +456,100 @@ def thetaEst(it, x, model = None, D = 1, method = "BM", priorDist = "norm", prio
                         else:
                             res = so.brentq(f, max(-1*pr2['x']), min(pr['x']))
     return res
+                                     
+ def semTheta(thEst, it, x = None, model = None, D = 1, method = "BM", 
+    priorDist = "norm", priorPar = np.array([0, 1]), weight = "Huber", 
+    tuCo = 1, sem_type = "classic", parInt = np.array([-4, 4, 33]), constantPatt = None, 
+    sem_exact = False ,trueTh = None, rang = np.array([-4,4])):
+
+    def constantPattern(t): 
+        return(sum(t) != 0 and sum(t) != len(t))
+
+    METHOD = None
+
+    if constantPattern(x) or model != None or constantPatt == None:  
+        METHOD = method
+    else:
+        if constantPatt in ["BM", "EAP", "WL"]: 
+            METHOD = constantPatt
+        else:
+            RES = np.inf
+    
+    if x.all() != None:
+        ind = np.array([i for i,v in enumerate(x) if v != None])
+        it = it[ind, ]
+        x = x[ind]
+
+    if METHOD != None:
+        if sem_exact and model == None:
+            if trueTh !=0:
+                TH = np.array([thEst, trueTh])
+            else:
+                TH = thEst
+            it = np.array([it]) if len(it.shape) == 1 else it
+            dist = fullDist(TH, it, method = method,
+                   priorDist = priorDist, priorPar = priorPar,
+                   weight = weight, tuCo = tuCo, range = range, parInt = parInt)
+            def formula(t, u):
+                return np.sqrt(sum(t*(u - sum(t*u))^2))
+            exactSE = formula(dist[:, 1], dist[:, 0])
+            if len(TH) > 1:
+                trueSE = formula(dist[:, 2], dist[:, 0]) 
+            else:
+                trueSE = None
+            RES = np.array([exactSE,trueSE])
+        else:
+            if method == "EAP":
+                RES = eapSem(thEst, it, x = x, model = model, D = D, 
+                priorDist = priorDist, priorPar = priorPar, lower = parInt[0], 
+                upper = parInt[1], nqp = parInt[2])
+            else:
+                if model == None:
+                    info = sum(Ii(thEst, it, D = D)['Ii'])
+                    def dr0(th, it, D = 1, method = "BM", priorDist = "norm", priorPar = np.array([0, 1])):
+                        if method == "BM":
+                            d={ 'norm' : -1/priorPar[1]**2, 'unif' : 0, 
+                                                        'Jeffreys' : (sum(Ii(th, it, D = D)['d2Ii']) * sum(Ii(th, it, D = D)['Ii']) - sum(Ii(th, it, D = D)['dIi'])**2)/(2 * sum(Ii(th, it, D = D)['Ii'])**2)}
+                            if priorDist in d.keys():
+                                res=d[priorDist]
+                        else:
+                            res = (sum(Ji(th, it, D = D)['dJi']) * sum(Ii(th, it, D = D)['Ii']) - sum(Ji(th, it, D = D)['Ji']) * 
+                                   sum(Ii(th, it, D = D)['dIi']))/(2 * sum(Ii(th, it, D = D)['Ii'])^2)
+                        return(res)
+                    if (METHOD == "BM"):
+                        dic={'classic' : 1, 'new' : np.sqrt(info)}
+                        dic1={ 'classic' : np.sqrt(info - dr0(thEst, it, method = "BM", priorDist = priorDist, priorPar = priorPar)),
+                                               'new' : abs(info - dr0(thEst, it, method = "BM", priorDist = priorDist, priorPar = priorPar))}
+                        if sem_type in  dic.keys():
+                            NUM = dic[sem_type]
+                            DEN=dic1[sem_type]
+                        else:
+                            NUM=None
+                            DEN=None
+    
+                    RES = NUM/DEN
+                else:
+                    dic2={ 'ML' : 1, 'BM' : 2, 'WL' : 3, 'EAP' : 4 }
+                    dic3={ 'norm' : 1, 'unif' : 2, 'Jeffreys' : 3}
+                    if method in dic2.keys():
+                        met=dic2[method]
+                    else:
+                        met=None
+                    if priorDist in dic3.keys():
+                        pd=dic3[priorDist]
+                    else:
+                        pd=None
+                    if met == 1 or (met == 2 and pd == 2):
+                        optI = sum(Ii(thEst, it, model = model, D = D)['Ii'])
+                    if met == 2 and pd == 1:
+                        optI = sum(Ii(thEst, it, model = model, D = D)['Ii']) + 1/priorPar[1]^2
+                    if (met == 2 and pd == 3) or met == 3: 
+                        prI = Ii(thEst, it, model = model, D = D)
+                        prJ = Ji(thEst, it, model = model, D = D)
+                        if met == 2:
+                            optI = sum(prI['Ii']) + (sum(prI['dIi'])**2 - sum(prI['d2Ii']) * sum(prI['Ii']))/(2 * sum(prI['Ii'])**2)
+                        else:
+                            optI = sum(prI['Ii'])
+                    RES = 1/np.sqrt(optI)
+    return(RES)                                   
+                                     
